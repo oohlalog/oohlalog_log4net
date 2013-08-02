@@ -19,7 +19,6 @@ To configure for asynchronous logging, modify the log4net configuration in your 
       <apikey value="<YOUR_API_KEY_HERE>"/>
     </appender>
 
-    <!-- Setup the root category, add the appenders and set the default level -->
     <root>
       <level value="ALL"/>
       <appender-ref ref="AsyncOohLaLogAppender"/>
@@ -35,7 +34,6 @@ To configure for synchronous logging, modify the log4net configuration in your p
       <apikey value="<YOUR_API_KEY_HERE>"/>
     </appender>
 
-    <!-- Setup the root category, add the appenders and set the default level -->
     <root>
       <level value="ALL"/>
       <appender-ref ref="OohLaLogAppender"/>
