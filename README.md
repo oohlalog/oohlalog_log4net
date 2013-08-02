@@ -14,7 +14,7 @@ To configure for asynchronous logging, modify the log4net configuration in your 
 
 
   <!-- This section contains the log4net configuration settings -->
-  <log4net>
+  &lt;log4net&gt;
     <appender name="AsyncOohLaLogAppender" type="OohLaLogAdapter.AsyncOohLaLogAppender, OohLaLogAdapter">
       <apikey value="<YOUR_API_KEY_HERE>"/>
     </appender>
