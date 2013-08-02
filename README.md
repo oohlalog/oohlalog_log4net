@@ -14,30 +14,32 @@ To configure for asynchronous logging, modify the log4net configuration in your 
 
 
   <!-- This section contains the log4net configuration settings -->
+  <!--
   <log4net>
     <appender name="AsyncOohLaLogAppender" type="OohLaLogAdapter.AsyncOohLaLogAppender, OohLaLogAdapter">
       <apikey value="<YOUR_API_KEY_HERE>"/>
     </appender>
 
-    <!-- Setup the root category, add the appenders and set the default level -->
     <root>
       <level value="ALL"/>
       <appender-ref ref="AsyncOohLaLogAppender"/>
     </root>
   </log4net>
+  -->
 
 
 To configure for synchronous logging, modify the log4net configuration in your project config file to include the non-asynchronous OohLaLog appender:
 
   <!-- This section contains the log4net configuration settings -->
+  <!--
   <log4net>
     <appender name="OohLaLogAppender" type="OohLaLogAdapter.OohLaLogAppender, OohLaLogAdapter">
       <apikey value="<YOUR_API_KEY_HERE>"/>
     </appender>
 
-    <!-- Setup the root category, add the appenders and set the default level -->
     <root>
       <level value="ALL"/>
       <appender-ref ref="OohLaLogAppender"/>
     </root>
   </log4net>
+  -->
