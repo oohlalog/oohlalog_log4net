@@ -23,9 +23,9 @@ namespace OohLaLogAdapter
             this.AddAppender(new OohLaLogAppender());
         }
 		private string m_name;
-        private string m_host;
+        private string m_host = OohLaLogAppender.DefaultHost;
         private string m_apikey;
-        private log4net.Layout.PatternLayout m_layout;
+        private log4net.Layout.PatternLayout m_layout = new PatternLayout(OohLaLogAppender.DefaultLayout);
         private AppenderAttachedImpl m_appenderAttachedImpl;
         private FixFlags m_fixFlags = FixFlags.All;
 

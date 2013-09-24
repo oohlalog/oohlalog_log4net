@@ -35,7 +35,8 @@
     <Reference Include="log4net">
       <HintPath>..\..\lib\log4net.dll</HintPath>
     </Reference>
-    <Reference Include="OohLaLogAdapter">
+    <Reference Include="OohLaLogAdapter, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\lib\OohLaLogAdapter.dll</HintPath>
     </Reference>
     <Reference Include="System" />
@@ -51,7 +52,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

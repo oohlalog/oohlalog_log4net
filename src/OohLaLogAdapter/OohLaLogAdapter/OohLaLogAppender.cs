@@ -23,9 +23,11 @@ namespace OohLaLogAdapter
 		{
             Layout = new log4net.Layout.PatternLayout(m_defaultLayout);
 		}
-        private string m_host = "http://www.oohlalog.com/api/logging/save.json";
+        public static string DefaultHost = "http://www.oohlalog.com/api/logging/save.json";
+        public static string DefaultLayout = "%date [%thread] %-5level %logger - %message%newline";
+        private string m_host = OohLaLogAppender.DefaultHost;
         private string m_apikey;
-        private string m_defaultLayout = "%date [%thread] %-5level %logger - %message%newline";
+        private string m_defaultLayout = OohLaLogAppender.DefaultLayout;
 
         #region Properties
         public static long DateTimeToEpochTime(DateTime utc)
