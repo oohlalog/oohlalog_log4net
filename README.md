@@ -13,6 +13,7 @@ Include the OohLaLogAdapter library into your .NET project. The library DLL (Ooh
 To configure for asynchronous logging, modify the log4net configuration in your project config file to include the asynchronous OohLaLog appender:
 
 
+```html
   <!-- This section contains the log4net configuration settings -->
   <log4net>
     <appender name="AsyncOohLaLogAppender" type="OohLaLogAdapter.AsyncOohLaLogAppender, OohLaLogAdapter">
@@ -24,10 +25,11 @@ To configure for asynchronous logging, modify the log4net configuration in your 
       <appender-ref ref="AsyncOohLaLogAppender"/>
     </root>
   </log4net>
-
+```
 
 To configure for synchronous logging, modify the log4net configuration in your project config file to include the non-asynchronous OohLaLog appender:
 
+```html
   <!-- This section contains the log4net configuration settings -->
   <log4net>
     <appender name="OohLaLogAppender" type="OohLaLogAdapter.OohLaLogAppender, OohLaLogAdapter">
@@ -39,3 +41,4 @@ To configure for synchronous logging, modify the log4net configuration in your p
       <appender-ref ref="OohLaLogAppender"/>
     </root>
   </log4net>
+```
