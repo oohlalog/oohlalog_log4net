@@ -24,6 +24,7 @@ namespace OohLaLogAdapter
         }
 		private string m_name;
         private string m_host = OohLaLogAppender.DefaultHost;
+        private bool m_isSecure = OohLaLogAppender.DefaultIsSecure;
         private string m_apikey;
         private log4net.Layout.PatternLayout m_layout = new PatternLayout(OohLaLogAppender.DefaultLayout);
         private AppenderAttachedImpl m_appenderAttachedImpl;
@@ -34,6 +35,11 @@ namespace OohLaLogAdapter
         {
             get { return m_host; }
             set { m_host = value; }
+        }
+        public bool IsSecure
+        {
+            get { return m_isSecure; }
+            set { m_isSecure = value; }
         }
         public log4net.Layout.PatternLayout Layout
         {
@@ -65,6 +71,7 @@ namespace OohLaLogAdapter
             a.Layout = Layout;
             a.ApiKey = ApiKey;
             a.Host = Host;
+            a.IsSecure = IsSecure;
             a.SetUrl();
 		}
 

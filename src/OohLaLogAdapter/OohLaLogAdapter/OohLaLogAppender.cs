@@ -23,9 +23,12 @@ namespace OohLaLogAdapter
 		{
             Layout = new log4net.Layout.PatternLayout(m_defaultLayout);
 		}
-        public static string DefaultHost = "http://www.oohlalog.com/api/logging/save.json";
+        public static string DefaultHost = "api.oohlalog.com";
+        public static string DefaultUrlPath = "api/logging/save.json";
+        public static bool DefaultIsSecure = false;
         public static string DefaultLayout = "%date [%thread] %-5level %logger - %message%newline";
         private string m_host = OohLaLogAppender.DefaultHost;
+        private bool m_isSecure = OohLaLogAppender.DefaultIsSecure;
         private string m_apikey;
         private string m_defaultLayout = OohLaLogAppender.DefaultLayout;
 
@@ -41,6 +44,11 @@ namespace OohLaLogAdapter
 			get { return m_host; }
 			set { m_host = value; }
 		}
+        public bool IsSecure
+        {
+            get { return m_isSecure; }
+            set { m_isSecure = value; }
+        }
 
         public string ApiKey
         {
@@ -52,7 +60,8 @@ namespace OohLaLogAdapter
         #region Methods
         public void SetUrl()
         {
-            Url = String.Format("{0}?apiKey={1}", Host, ApiKey);
+            Url = String.Format("{0}://{1}/{2}?apiKey={3}",(IsSecure ? "https" : "http"), Host
+                , DefaultUrlPath,ApiKey);
         }
         #endregion
 
