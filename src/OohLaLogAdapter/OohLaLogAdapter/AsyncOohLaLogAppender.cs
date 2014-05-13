@@ -1,5 +1,7 @@
 using System;
 using System.Threading;
+using System.Collections.Generic;
+using System.Timers;
 using log4net.Appender;
 using log4net.Core;
 using log4net.Util;
@@ -18,69 +20,116 @@ namespace OohLaLogAdapter
 	/// </remarks>
 	public sealed class AsyncOohLaLogAppender : IAppender, IBulkAppender, IOptionHandler, IAppenderAttachable
 	{
+        private static int DefaultBufferLimit = 150;
+        private static double DefaultBufferInterval = 60; // 60 seconds
+        private static double DefaultMetricsInterval = 0; //deactivated
+        private bool m_bufferenabled = false;
+        private bool m_closing = false;
+        private AppenderAttachedImpl m_appenderAttachedImpl;
+        private List<LoggingEvent> m_events = new List<LoggingEvent>();
         public AsyncOohLaLogAppender()
         {
-            this.AddAppender(new OohLaLogAppender());
+            Appender = new OohLaLogAppender();
+            HostName = Appender.HostName;
+            Host = OohLaLogAppender.DefaultHost;
+            IsSecure = OohLaLogAppender.DefaultIsSecure;
+            Layout = new log4net.Layout.PatternLayout(OohLaLogAppender.DefaultLayout);
+            BufferLimit = AsyncOohLaLogAppender.DefaultBufferLimit;
+            BufferInterval = AsyncOohLaLogAppender.DefaultBufferInterval;
+            MetricsInterval = AsyncOohLaLogAppender.DefaultMetricsInterval;
+
+            this.AddAppender(Appender);
         }
-		private string m_name;
-        private string m_host = OohLaLogAppender.DefaultHost;
-        private bool m_isSecure = OohLaLogAppender.DefaultIsSecure;
-        private string m_apikey;
-        private log4net.Layout.PatternLayout m_layout = new PatternLayout(OohLaLogAppender.DefaultLayout);
-        private AppenderAttachedImpl m_appenderAttachedImpl;
-        private FixFlags m_fixFlags = FixFlags.All;
 
         #region Properties
-        public string Host
-        {
-            get { return m_host; }
-            set { m_host = value; }
-        }
-        public bool IsSecure
-        {
-            get { return m_isSecure; }
-            set { m_isSecure = value; }
-        }
-        public log4net.Layout.PatternLayout Layout
-        {
-            get { return m_layout; }
-            set { m_layout = value; }
-        }
+        //overridable properties
+        public string ApiKey { get; set; } //oohlalog api key
+        public string Host { get; set; } //oohlalog host
+        public string HostName { get; set; }
+        public string Name { get; set; }
+        public bool IsSecure { get; set; }
+        public int BufferLimit { get; set; }
+        public double BufferInterval { get; set; } //0 disables buffer
+        public double MetricsInterval { get; set; } //0 disables metrics reporting
+        public log4net.Layout.PatternLayout Layout { get; set; }
 
-        public string ApiKey
-        {
-            get { return m_apikey; }
-            set { m_apikey = value; }
-        }
-        public string Name
-		{
-			get { return m_name; }
-			set { m_name = value; }
-		}
-        public FixFlags Fix
-        {
-            get { return m_fixFlags; }
-            set { m_fixFlags = value; }
-        }
+        private OohLaLogAppender Appender { get; set; }
+        private System.Timers.Timer BufferTimer { get; set; }
+        private System.Timers.Timer MetricsTimer { get; set; }
         #endregion
 
         #region Methods
         public void ActivateOptions() 
 		{
-            OohLaLogAppender a = (OohLaLogAppender)Appenders[0];
-            a.Layout = Layout;
-            a.ApiKey = ApiKey;
-            a.Host = Host;
-            a.IsSecure = IsSecure;
-            a.SetUrl();
+            Appender.HostName = HostName;
+            Appender.Layout = Layout;
+            Appender.ApiKey = ApiKey;
+            Appender.Host = Host;
+            Appender.IsSecure = IsSecure;
+            if (MetricsInterval > 0)
+            {
+                Appender.ResourceCounters = new OohLaLogAppender.Counters();
+                if (MetricsInterval < 1) MetricsInterval = 1; //1 second minimum
+                MetricsTimer = new System.Timers.Timer(MetricsInterval * 1000);
+                MetricsTimer.Elapsed += metricstimer_Elapsed;
+            }
+            if (BufferInterval > 0)
+            {
+                m_bufferenabled = true;
+                if (BufferInterval < 1) BufferInterval = 1; //1 second minimum
+                if (BufferLimit < 1) BufferLimit = 1; //1 minimum but very inefficient
+                BufferTimer = new System.Timers.Timer(BufferInterval * 1000);
+                BufferTimer.Elapsed += buffertimer_Elapsed;
+            }
+            Appender.ActivateOptions();
+            if (MetricsTimer != null) StartMetricsTimer();
+            if (BufferTimer != null) StartBufferTimer();
 		}
 
+        private void buffertimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            FlushBuffer();
+        }
+        private void StopBufferTimer()
+        {
+            if (BufferTimer != null)
+                BufferTimer.Stop();
+        }
+        private void StartBufferTimer()
+        {
+            if (BufferTimer != null && !m_closing) BufferTimer.Start();
+        }
+        private void FlushBuffer()
+        {
+            if (m_events.Count == 0) return;
+            AddEvent(null);
+        }
+        private void StopMetricsTimer()
+        {
+            if (MetricsTimer != null)
+                MetricsTimer.Stop();
+        }
+        private void StartMetricsTimer()
+        {
+            if (MetricsTimer != null && !m_closing)
+                MetricsTimer.Start();
+        }
+        private void metricstimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            StopMetricsTimer();
+            Appender.sendResourceMetricsPayload();
+            StartMetricsTimer();
+        }
 
 		public void Close()
 		{
 			// Remove all the attached appenders
 			lock(this)
 			{
+                m_closing = true;
+                StopBufferTimer();
+                StopMetricsTimer();
+                FlushBuffer();
 				if (m_appenderAttachedImpl != null)
 				{
 					m_appenderAttachedImpl.RemoveAllAppenders();
@@ -88,19 +137,63 @@ namespace OohLaLogAdapter
 			}
 		}
 
+        public void AddEvent(LoggingEvent logEvent)
+        {
+            AddEventOrEvents(logEvent, null);
+        }
+        public void AddEvents(LoggingEvent[] logEvents)
+        {
+            AddEventOrEvents(null, logEvents);
+        }
+        public void AddEventOrEvents(LoggingEvent logEvent, LoggingEvent[] logEvents)
+        {
+            LoggingEvent[] loggingEvents = null;
+            bool flushBuffer = false;
+            lock (this)
+            {
+                if (logEvent != null)
+                    m_events.Add(logEvent);
+                else if (logEvents != null)
+                    m_events.AddRange(logEvents);
+                else
+                    flushBuffer = true;
+                if (m_events.Count >= BufferLimit || flushBuffer)
+                {
+                    StopBufferTimer();
+                    if (m_events.Count > 0)
+                    {
+                        loggingEvents = new LoggingEvent[m_events.Count];
+                        m_events.CopyTo(loggingEvents);
+                        m_events.Clear();
+                    }
+                    StartBufferTimer();
+                }
+            }
+            if (loggingEvents != null && !m_closing)
+                System.Threading.ThreadPool.QueueUserWorkItem(new WaitCallback(AsyncAppend), loggingEvents);
+            else if (loggingEvents != null)
+                Appender.DoAppend(loggingEvents);
+        }
+
 		public void DoAppend(LoggingEvent loggingEvent)
 		{
-			loggingEvent.Fix = m_fixFlags;
-			System.Threading.ThreadPool.QueueUserWorkItem(new WaitCallback(AsyncAppend), loggingEvent);
+			loggingEvent.Fix = FixFlags.All;
+            if (m_bufferenabled)
+                AddEvent(loggingEvent);
+            else
+                System.Threading.ThreadPool.QueueUserWorkItem(new WaitCallback(AsyncAppend), loggingEvent);
 		}
 
 		public void DoAppend(LoggingEvent[] loggingEvents)
 		{
 			foreach(LoggingEvent loggingEvent in loggingEvents)
 			{
-				loggingEvent.Fix = m_fixFlags;
+				loggingEvent.Fix = FixFlags.All;
 			}
-			System.Threading.ThreadPool.QueueUserWorkItem(new WaitCallback(AsyncAppend), loggingEvents);
+            if (m_bufferenabled)
+                AddEvents(loggingEvents);
+            else
+                System.Threading.ThreadPool.QueueUserWorkItem(new WaitCallback(AsyncAppend), loggingEvents);
 		}
 
 		private void AsyncAppend(object state)
