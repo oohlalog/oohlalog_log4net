@@ -17,28 +17,25 @@ To configure for asynchronous logging, modify the log4net configuration in your 
   <!-- This section contains the log4net configuration settings -->
   <log4net>
     <appender name="AsyncOohLaLogAppender" type="OohLaLogAdapter.AsyncOohLaLogAppender, OohLaLogAdapter">
-      <apikey value="YOUR_API_KEY_HERE"/>
+    	<!--required settings-->
+	<apikey value="YOUR_API_KEY_HERE"/>
+    	<!--optional settings:
+      		issecure: true or false; default is false
+      		hostname: default is machine name as returned from System.Environment.MachineName
+      		bufferlimit: number of logs to buffer before posting to OLL (lower numbers impact app performance); default is 150
+      		bufferinterval: age in seconds of logs in buffer before automatic posting to OLL (lower numbers impact app performance); default is 60 seconds
+		layout: format of log message. See log4net documentation for details
+      	<bufferlimit value="150"/>
+      	<bufferinterval value="60"/>
+      	<issecure value="false"/>
+      	<hostname value="test-pc"/>
+	<layout type="log4net.Layout.PatternLayout" value="%date %-5level %logger - %message%newline"/>
+    	-->
     </appender>
 
     <root>
       <level value="ALL"/>
       <appender-ref ref="AsyncOohLaLogAppender"/>
-    </root>
-  </log4net>
-```
-
-To configure for synchronous logging, modify the log4net configuration in your project config file to include the non-asynchronous OohLaLog appender:
-
-```html
-  <!-- This section contains the log4net configuration settings -->
-  <log4net>
-    <appender name="OohLaLogAppender" type="OohLaLogAdapter.OohLaLogAppender, OohLaLogAdapter">
-      <apikey value="YOUR_API_KEY_HERE"/>
-    </appender>
-
-    <root>
-      <level value="ALL"/>
-      <appender-ref ref="OohLaLogAppender"/>
     </root>
   </log4net>
 ```
