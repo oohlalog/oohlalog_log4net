@@ -28,6 +28,7 @@ namespace OohLaLogAdapter
         private static string DefaultMetricsUrlPath = "api/timeSeries/save.json";
         public OohLaLogAppender()
 		{
+            AgentName = String.Format("log4net-v{0}", typeof(OohLaLogAppender).Assembly.GetName().Version);
             HostName = System.Environment.MachineName;
             Host = OohLaLogAppender.DefaultHost;
             IsSecure = OohLaLogAppender.DefaultIsSecure;
@@ -41,6 +42,7 @@ namespace OohLaLogAdapter
         public string ApiKey { get; set; }
         public bool IsSecure {get; set;}
 
+        private string AgentName { get; set; }
         private string Url { get; set; }
         private string MetricsUrl { get; set; }
         #endregion
@@ -59,7 +61,7 @@ namespace OohLaLogAdapter
                 using (WebClient client = new MyWebClient())
                 {
                     client.Headers.Add("Content-Type", "application/json");
-                    string response = client.UploadString(Url, String.Format("{{\"logs\": [{1}]}}", HostName,payload));
+                    string response = client.UploadString(Url, String.Format("{{\"agent\": \"{0}\",\"logs\": [{1}]}}", AgentName, payload));
                 }
             }
             catch (Exception e)
@@ -123,7 +125,7 @@ namespace OohLaLogAdapter
                 sb.Append(String.Format(",\"memory.physical.freeBytes\":{0:0.00}", ResourceCounters.TotalAvailableRam));
                 sb.Append(String.Format(",\"memory.physical.totalBytes\":{0:0.00}", ResourceCounters.TotalRam));
                 sb.Append(String.Format(",\"memory.process.usedMemory\":{0:0.00}", ResourceCounters.ProcessRam));
-                string payload = String.Format("{{\"host\": \"{0}\", \"metrics\":{{{1}}}}}", HostName, sb.ToString());
+                string payload = String.Format("{{\"agent\": \"{0}\",\"host\": \"{1}\", \"metrics\":{{{2}}}}}", AgentName, HostName, sb.ToString());
                 using (WebClient client = new MyWebClient())
                 {
                     client.Headers.Add("Content-Type", "application/json");
